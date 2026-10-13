@@ -2,8 +2,10 @@ import os
 import re
 import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 from openai import OpenAI
+
 
 # Cargar variables de entorno
 load_dotenv()
@@ -141,20 +143,22 @@ with col2:
 
 # Display the dataset if it exists
 if "df" in st.session_state:
-    st.divider()
-    product_col = next((col for col in st.session_state["df"].columns if col.upper() == "PRODUCT"), None)
-    
-    if product_col:
-        st.subheader("🔍 Filter by Product")
-        product_options = ["All Products"] + list(st.session_state["df"][product_col].dropna().unique())
-        product = st.selectbox("Choose a product", product_options)
-        st.subheader(f"📁 Reviews for {product}")
+    # Product filter dropdown
+    st.subheader("🔍 Filter by Product")
+    product = st.selectbox("Choose a product", ["All Products"] + list(st.session_state["df"]["PRODUCT"].unique()))
+    st.subheader(f"📁 Reviews for {product}")
 
-        if product != "All Products":
-            filtered_df = st.session_state["df"][st.session_state["df"][product_col] == product]
-        else:
-            filtered_df = st.session_state["df"]
-        st.dataframe(filtered_df)
+    if product != "All Products":
+        filtered_df = st.session_state["df"][st.session_state["df"]["PRODUCT"] == product]
     else:
-        st.subheader("📁 Reviews Dataset")
-        st.dataframe(st.session_state["df"])
+        filtered_df = st.session_state["df"]
+    st.dataframe(filtered_df)
+    
+    st.subheader(f"Sentiment Score Distribution for {product}")
+    # Create matplotlib histogram
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.hist(filtered_df["SENTIMENT_SCORE"], bins=10, edgecolor='black', alpha=0.7)
+    ax.set_xlabel('Sentiment Score')
+    ax.set_ylabel('Frequency')
+    ax.set_title('Distribution of Sentiment Scores')
+    st.pyplot(fig)
